@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
 
     private fun buildScreen() {
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(bg) }
-        val scroll = ScrollView(this).apply { fillViewport = true }
+        val scroll = ScrollView(this).apply { isFillViewport = true }
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(22), dp(18), dp(22), dp(30)) }
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val brand = TextView(this).apply { text = "◉  CHRONOFLOW"; textSize = 17f; setTextColor(white); typeface = Typeface.create("sans-serif", Typeface.BOLD); letterSpacing = .08f }
