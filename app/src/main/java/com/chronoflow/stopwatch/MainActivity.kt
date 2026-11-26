@@ -29,14 +29,14 @@ class MainActivity : ComponentActivity() {
     private enum class State { IDLE, RUNNING, PAUSED }
     private data class Session(val name: String, val date: String, val total: Long, val laps: List<Long>)
 
-    private val bg = 0xFF080D18.toInt()
-    private val panel = 0xFF111C2D.toInt()
-    private val panelAlt = 0xFF172438.toInt()
-    private val muted = 0xFF91A2B8.toInt()
-    private val cyan = 0xFF35D6C5.toInt()
-    private val white = 0xFFF4F7FC.toInt()
-    private val orange = 0xFFFFB86B.toInt()
-    private val red = 0xFFFF7185.toInt()
+    private val bg = 0xFF06142B.toInt()
+    private val panel = 0xFF0D2344.toInt()
+    private val panelAlt = 0xFF15365F.toInt()
+    private val muted = 0xFFA8BEDA.toInt()
+    private val cyan = 0xFF12BDF2.toInt()
+    private val white = 0xFFF7FAFF.toInt()
+    private val orange = 0xFFFFC900.toInt()
+    private val red = 0xFFFF647C.toInt()
 
     private var state = State.IDLE
     private var startedAt = 0L
@@ -102,20 +102,19 @@ class MainActivity : ComponentActivity() {
 
         // Brand header
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        val brandIcon = TextView(this).apply {
-            text = "◷"
-            textSize = 25f
-            gravity = Gravity.CENTER
-            setTextColor(bg)
-            background = rounded(cyan, 14)
+        val brandIcon = ImageView(this).apply {
+            setImageResource(R.mipmap.ic_launcher)
+            scaleType = ImageView.ScaleType.FIT_CENTER
         }
-        header.addView(brandIcon, LinearLayout.LayoutParams(dp(42), dp(42)))
-        val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(11), 0, 0, 0) }
-        brandColumn.addView(label("CHRONOFLOW", 18f, white, true))
-        brandColumn.addView(label("PRECISION TIMEKEEPING", 9f, muted, true).apply { setPadding(0, dp(3), 0, 0); letterSpacing = .12f })
+        header.addView(brandIcon, LinearLayout.LayoutParams(dp(52), dp(52)))
+        val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(10), 0, 0, 0) }
+        val brandName = label("RMG TIMER", 20f, white, true)
+        brandName.letterSpacing = .015f
+        brandColumn.addView(brandName)
+        brandColumn.addView(label("PRECISION TIME STUDY", 9f, orange, true).apply { setPadding(0, dp(3), 0, 0); letterSpacing = .12f })
         header.addView(brandColumn, LinearLayout.LayoutParams(0, -2, 1f))
         val today = SimpleDateFormat("EEE, dd MMM", Locale.getDefault()).format(Date()).uppercase(Locale.getDefault())
-        dateText = label(today, 10f, cyan, true).apply { setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF153039.toInt(), 30) }
+        dateText = label(today, 10f, orange, true).apply { setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF17345B.toInt(), 30) }
         header.addView(dateText)
         content.addView(header)
 
@@ -130,16 +129,31 @@ class MainActivity : ComponentActivity() {
         heroTop.addView(stateText, LinearLayout.LayoutParams(0, -2, 1f))
         heroTop.addView(label("LIVE TIMER", 9f, muted, true).apply { setPadding(dp(9), dp(6), dp(9), dp(6)); background = rounded(panelAlt, 20) })
         hero.addView(heroTop)
-        timerText = label("00:00:00.00", 39f, white, true).apply {
+        val timerRing = FrameLayout(this).apply {
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(0xFF081A35.toInt())
+                setStroke(dp(5), 0xFF08B9F2.toInt())
+            }
+            elevation = dp(5).toFloat()
+        }
+        val timerCenter = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+        }
+        timerCenter.addView(label("▶", 27f, 0xFF00D66B.toInt(), true).apply { gravity = Gravity.CENTER; setPadding(0, 0, 0, dp(10)) })
+        timerText = label("00:00:00.00", 35f, white, true).apply {
             typeface = Typeface.create("sans-serif", Typeface.BOLD)
             includeFontPadding = false
             gravity = Gravity.CENTER
-            letterSpacing = -.025f
-            setPadding(0, dp(30), 0, dp(8))
+            letterSpacing = -.035f
         }
-        hero.addView(timerText)
-        hero.addView(label("HOURS     MINUTES     SECONDS", 9f, muted, false).apply { gravity = Gravity.CENTER; letterSpacing = .08f; setPadding(0, 0, 0, dp(22)) })
-        hero.addView(View(this).apply { setBackgroundColor(0xFF26364A.toInt()) }, LinearLayout.LayoutParams(-1, dp(1)))
+        timerCenter.addView(timerText)
+        timerCenter.addView(label("HOURS  ·  MINUTES  ·  SECONDS", 9f, muted, false).apply { gravity = Gravity.CENTER; letterSpacing = .02f; setPadding(0, dp(8), 0, 0) })
+        timerRing.addView(timerCenter, FrameLayout.LayoutParams(-1, -1))
+        hero.addView(timerRing, LinearLayout.LayoutParams(dp(278), dp(278)).apply { gravity = Gravity.CENTER; topMargin = dp(20); bottomMargin = dp(18) })
+        hero.addView(View(this).apply { setBackgroundColor(0xFF23466E.toInt()) }, LinearLayout.LayoutParams(-1, dp(1)))
 
         val stats = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(16), 0, 0) }
         val statLap = statColumn("LAPS", "0", cyan)
@@ -156,8 +170,8 @@ class MainActivity : ComponentActivity() {
 
         // Exactly two multifunction controls
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(18), 0, dp(7)) }
-        primaryButton = actionButton("START", cyan, bg) { primaryAction() }
-        secondaryButton = actionButton("LAP", 0xFF24334A.toInt(), white) { addLap() }
+        primaryButton = actionButton("▶   START", orange, 0xFF06142B.toInt()) { primaryAction() }
+        secondaryButton = actionButton("⚑   LAP", 0xFF174477.toInt(), white) { addLap() }
         secondaryButton.setOnLongClickListener {
             if (state != State.IDLE) stopAndSave()
             true
@@ -188,7 +202,7 @@ class MainActivity : ComponentActivity() {
         content.addView(historyHeader)
         historyList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(historyList)
-        content.addView(label("TIME IS YOURS. MAKE EVERY SECOND COUNT.", 9f, 0xFF53657B.toInt(), true).apply {
+        content.addView(label("RMG TIMER  ·  EVERY SECOND COUNTS", 9f, 0xFF6F91B8.toInt(), true).apply {
             gravity = Gravity.CENTER
             letterSpacing = .08f
             setPadding(0, dp(27), 0, 0)
@@ -302,9 +316,10 @@ class MainActivity : ComponentActivity() {
             State.RUNNING -> "PAUSE"
             State.PAUSED -> "RESUME"
         }
-        primaryButton.setTextColor(if (state == State.RUNNING) white else bg)
-        primaryButton.background = rounded(if (state == State.RUNNING) 0xFF247E78.toInt() else cyan, 18)
-        secondaryButton.text = if (state == State.IDLE) "LAP" else "LAP  /  HOLD TO STOP"
+        primaryButton.setTextColor(0xFF06142B.toInt())
+        primaryButton.background = rounded(if (state == State.RUNNING) 0xFFFFB900.toInt() else orange, 18)
+        primaryButton.text = when (state) { State.IDLE -> "▶   START"; State.RUNNING -> "Ⅱ   PAUSE"; State.PAUSED -> "▶   RESUME" }
+        secondaryButton.text = if (state == State.IDLE) "⚑   LAP" else "⚑   LAP  ·  HOLD TO STOP"
         secondaryButton.isEnabled = state != State.IDLE
         secondaryButton.alpha = if (state == State.IDLE) .5f else 1f
         lapCountText.text = laps.size.toString()
@@ -380,10 +395,10 @@ class MainActivity : ComponentActivity() {
                 textSize = 25f
                 typeface = Typeface.create("sans-serif", Typeface.BOLD)
             }
-            c.drawText("CHRONOFLOW", 42f, 58f, p)
+            c.drawText("RMG TIMER", 42f, 58f, p)
             p.textSize = 13f
             p.color = android.graphics.Color.rgb(40, 160, 150)
-            c.drawText("STOPWATCH SESSION REPORT", 42f, 82f, p)
+            c.drawText("TIME STUDY SESSION REPORT", 42f, 82f, p)
             p.color = android.graphics.Color.DKGRAY
             p.textSize = 17f
             c.drawText(session.name, 42f, 132f, p)
@@ -421,13 +436,13 @@ class MainActivity : ComponentActivity() {
         history.take(100).forEach { s ->
             arr.put(JSONObject().put("name", s.name).put("date", s.date).put("total", s.total).put("laps", JSONArray(s.laps)))
         }
-        getSharedPreferences("chronoflow", MODE_PRIVATE).edit().putString("history", arr.toString()).apply()
+        getSharedPreferences("rmg_timer", MODE_PRIVATE).edit().putString("history", arr.toString()).apply()
     }
 
     private fun loadHistory(): MutableList<Session> {
         val out = mutableListOf<Session>()
         try {
-            val arr = JSONArray(getSharedPreferences("chronoflow", MODE_PRIVATE).getString("history", "[]"))
+            val arr = JSONArray(getSharedPreferences("rmg_timer", MODE_PRIVATE).getString("history", "[]"))
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
                 val a = o.getJSONArray("laps")
