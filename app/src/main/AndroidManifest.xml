@@ -6,7 +6,7 @@
         android:theme="@style/AppTheme"
         android:supportsRtl="true">
         <activity
-            android:name=".MainActivity"
+            android:name="RMG Stopwatch"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
