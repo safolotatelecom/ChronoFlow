@@ -34,13 +34,13 @@ class MainActivity : ComponentActivity() {
     private enum class State { IDLE, RUNNING, PAUSED }
     private data class Session(val name: String, val date: String, val total: Long, val laps: List<Long>)
 
-    private val bg = 0xFF080D18.toInt()
-    private val panel = 0xFF111C2D.toInt()
-    private val panelAlt = 0xFF172438.toInt()
-    private val muted = 0xFF91A2B8.toInt()
-    private val cyan = 0xFF35D6C5.toInt()
+    private val bg = 0xFF061329.toInt()
+    private val panel = 0xFF0D2142.toInt()
+    private val panelAlt = 0xFF142D52.toInt()
+    private val muted = 0xFF9AAFCB.toInt()
+    private val cyan = 0xFF16BDF2.toInt()
     private val white = 0xFFF4F7FC.toInt()
-    private val orange = 0xFFFFC928.toInt()
+    private val orange = 0xFFFFD21F.toInt()
     private val red = 0xFFFF7185.toInt()
 
     private var state = State.IDLE
@@ -107,14 +107,13 @@ class MainActivity : ComponentActivity() {
 
         // Brand header
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        val brandIcon = TextView(this).apply {
-            text = "◷"
-            textSize = 25f
-            gravity = Gravity.CENTER
-            setTextColor(bg)
-            background = rounded(cyan, 14)
+        val brandIcon = ImageView(this).apply {
+            setImageResource(R.drawable.rmg_logo)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "RMG Timer stopwatch runner logo"
+            setPadding(dp(1), dp(1), dp(1), dp(1))
         }
-        header.addView(brandIcon, LinearLayout.LayoutParams(dp(42), dp(42)))
+        header.addView(brandIcon, LinearLayout.LayoutParams(dp(58), dp(58)))
         val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(11), 0, 0, 0) }
         brandColumn.addView(label("RMG TIMER", 18f, white, true).apply { letterSpacing = .06f })
         brandColumn.addView(label("PRECISION TIME STUDY", 9f, orange, true).apply { setPadding(0, dp(3), 0, 0); letterSpacing = .12f })
@@ -141,15 +140,40 @@ class MainActivity : ComponentActivity() {
         }
         heroTop.addView(resetAction)
         hero.addView(heroTop)
-        timerText = label("00:00:00.00", 31.2f, white, true).apply {
+        // Signature circular precision dial
+        val dial = FrameLayout(this).apply {
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setColor(0xFF091A35.toInt())
+                setStroke(dp(3), cyan)
+            }
+            elevation = dp(5).toFloat()
+        }
+        val dialContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), 0, dp(8), 0)
+        }
+        timerText = label("00:00:00.00", 28f, white, true).apply {
             typeface = Typeface.create("sans-serif", Typeface.BOLD)
             includeFontPadding = false
             gravity = Gravity.CENTER
-            letterSpacing = -.025f
-            setPadding(0, dp(30), 0, dp(8))
+            letterSpacing = -.035f
+            setSingleLine(true)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 28f)
         }
-        hero.addView(timerText)
-        hero.addView(label("HOURS     MINUTES     SECONDS", 9f, muted, false).apply { gravity = Gravity.CENTER; letterSpacing = .08f; setPadding(0, 0, 0, dp(22)) })
+        dialContent.addView(timerText, LinearLayout.LayoutParams(-1, -2))
+        dialContent.addView(label("HOURS  ·  MINUTES  ·  SECONDS", 8f, muted, true).apply {
+            gravity = Gravity.CENTER
+            letterSpacing = .035f
+            setPadding(0, dp(9), 0, 0)
+        })
+        dial.addView(dialContent, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
+        hero.addView(dial, LinearLayout.LayoutParams(dp(258), dp(258)).apply {
+            gravity = Gravity.CENTER_HORIZONTAL
+            topMargin = dp(20)
+            bottomMargin = dp(22)
+        })
         hero.addView(View(this).apply { setBackgroundColor(0xFF26364A.toInt()) }, LinearLayout.LayoutParams(-1, dp(1)))
 
         val stats = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(16), 0, 0) }
@@ -416,7 +440,7 @@ class MainActivity : ComponentActivity() {
             State.PAUSED -> "RESUME"
         }
         primaryButton.setTextColor(if (state == State.RUNNING) white else bg)
-        primaryButton.background = rounded(if (state == State.RUNNING) 0xFF247E78.toInt() else cyan, 18)
+        primaryButton.background = rounded(if (state == State.RUNNING) 0xFF087EAA.toInt() else orange, 18)
         secondaryButton.text = if (state == State.IDLE) "LAP" else "LAP  /  HOLD TO STOP"
         secondaryButton.isEnabled = state != State.IDLE
         secondaryButton.alpha = if (state == State.IDLE) .5f else 1f
