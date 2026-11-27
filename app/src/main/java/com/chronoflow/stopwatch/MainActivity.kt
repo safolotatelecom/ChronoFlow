@@ -17,6 +17,11 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ClickableSpan
+import android.text.method.LinkMovementMethod
+import android.content.res.ColorStateList
 import android.widget.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,14 +34,14 @@ class MainActivity : ComponentActivity() {
     private enum class State { IDLE, RUNNING, PAUSED }
     private data class Session(val name: String, val date: String, val total: Long, val laps: List<Long>)
 
-    private val bg = 0xFF06142B.toInt()
-    private val panel = 0xFF0D2344.toInt()
-    private val panelAlt = 0xFF15365F.toInt()
-    private val muted = 0xFFA8BEDA.toInt()
-    private val cyan = 0xFF12BDF2.toInt()
-    private val white = 0xFFF7FAFF.toInt()
-    private val orange = 0xFFFFC900.toInt()
-    private val red = 0xFFFF647C.toInt()
+    private val bg = 0xFF080D18.toInt()
+    private val panel = 0xFF111C2D.toInt()
+    private val panelAlt = 0xFF172438.toInt()
+    private val muted = 0xFF91A2B8.toInt()
+    private val cyan = 0xFF35D6C5.toInt()
+    private val white = 0xFFF4F7FC.toInt()
+    private val orange = 0xFFFFC928.toInt()
+    private val red = 0xFFFF7185.toInt()
 
     private var state = State.IDLE
     private var startedAt = 0L
@@ -102,19 +107,20 @@ class MainActivity : ComponentActivity() {
 
         // Brand header
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        val brandIcon = ImageView(this).apply {
-            setImageResource(R.mipmap.ic_launcher)
-            scaleType = ImageView.ScaleType.FIT_CENTER
+        val brandIcon = TextView(this).apply {
+            text = "◷"
+            textSize = 25f
+            gravity = Gravity.CENTER
+            setTextColor(bg)
+            background = rounded(cyan, 14)
         }
-        header.addView(brandIcon, LinearLayout.LayoutParams(dp(52), dp(52)))
-        val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(10), 0, 0, 0) }
-        val brandName = label("RMG TIMER", 20f, white, true)
-        brandName.letterSpacing = .015f
-        brandColumn.addView(brandName)
+        header.addView(brandIcon, LinearLayout.LayoutParams(dp(42), dp(42)))
+        val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(11), 0, 0, 0) }
+        brandColumn.addView(label("RMG TIMER", 18f, white, true).apply { letterSpacing = .06f })
         brandColumn.addView(label("PRECISION TIME STUDY", 9f, orange, true).apply { setPadding(0, dp(3), 0, 0); letterSpacing = .12f })
         header.addView(brandColumn, LinearLayout.LayoutParams(0, -2, 1f))
         val today = SimpleDateFormat("EEE, dd MMM", Locale.getDefault()).format(Date()).uppercase(Locale.getDefault())
-        dateText = label(today, 10f, orange, true).apply { setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF17345B.toInt(), 30) }
+        dateText = label(today, 10f, cyan, true).apply { setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF153039.toInt(), 30) }
         header.addView(dateText)
         content.addView(header)
 
@@ -127,33 +133,24 @@ class MainActivity : ComponentActivity() {
         val heroTop = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         stateText = label("READY TO BEGIN", 11f, cyan, true).apply { letterSpacing = .15f }
         heroTop.addView(stateText, LinearLayout.LayoutParams(0, -2, 1f))
-        heroTop.addView(label("LIVE TIMER", 9f, muted, true).apply { setPadding(dp(9), dp(6), dp(9), dp(6)); background = rounded(panelAlt, 20) })
+        val resetAction = label("↻  RESET", 9f, orange, true).apply {
+            setPadding(dp(10), dp(7), dp(10), dp(7))
+            background = rounded(panelAlt, 20)
+            isClickable = true
+            setOnClickListener { confirmReset() }
+        }
+        heroTop.addView(resetAction)
         hero.addView(heroTop)
-        val timerRing = FrameLayout(this).apply {
-            background = android.graphics.drawable.GradientDrawable().apply {
-                shape = android.graphics.drawable.GradientDrawable.OVAL
-                setColor(0xFF081A35.toInt())
-                setStroke(dp(5), 0xFF08B9F2.toInt())
-            }
-            elevation = dp(5).toFloat()
-        }
-        val timerCenter = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(dp(8), dp(8), dp(8), dp(8))
-        }
-        timerCenter.addView(label("▶", 27f, 0xFF00D66B.toInt(), true).apply { gravity = Gravity.CENTER; setPadding(0, 0, 0, dp(10)) })
-        timerText = label("00:00:00.00", 35f, white, true).apply {
+        timerText = label("00:00:00.00", 31.2f, white, true).apply {
             typeface = Typeface.create("sans-serif", Typeface.BOLD)
             includeFontPadding = false
             gravity = Gravity.CENTER
-            letterSpacing = -.035f
+            letterSpacing = -.025f
+            setPadding(0, dp(30), 0, dp(8))
         }
-        timerCenter.addView(timerText)
-        timerCenter.addView(label("HOURS  ·  MINUTES  ·  SECONDS", 9f, muted, false).apply { gravity = Gravity.CENTER; letterSpacing = .02f; setPadding(0, dp(8), 0, 0) })
-        timerRing.addView(timerCenter, FrameLayout.LayoutParams(-1, -1))
-        hero.addView(timerRing, LinearLayout.LayoutParams(dp(278), dp(278)).apply { gravity = Gravity.CENTER; topMargin = dp(20); bottomMargin = dp(18) })
-        hero.addView(View(this).apply { setBackgroundColor(0xFF23466E.toInt()) }, LinearLayout.LayoutParams(-1, dp(1)))
+        hero.addView(timerText)
+        hero.addView(label("HOURS     MINUTES     SECONDS", 9f, muted, false).apply { gravity = Gravity.CENTER; letterSpacing = .08f; setPadding(0, 0, 0, dp(22)) })
+        hero.addView(View(this).apply { setBackgroundColor(0xFF26364A.toInt()) }, LinearLayout.LayoutParams(-1, dp(1)))
 
         val stats = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(16), 0, 0) }
         val statLap = statColumn("LAPS", "0", cyan)
@@ -170,8 +167,8 @@ class MainActivity : ComponentActivity() {
 
         // Exactly two multifunction controls
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(18), 0, dp(7)) }
-        primaryButton = actionButton("▶   START", orange, 0xFF06142B.toInt()) { primaryAction() }
-        secondaryButton = actionButton("⚑   LAP", 0xFF174477.toInt(), white) { addLap() }
+        primaryButton = actionButton("START", cyan, bg) { primaryAction() }
+        secondaryButton = actionButton("LAP", 0xFF24334A.toInt(), white) { addLap() }
         secondaryButton.setOnLongClickListener {
             if (state != State.IDLE) stopAndSave()
             true
@@ -197,16 +194,35 @@ class MainActivity : ComponentActivity() {
         // History and PDF
         val historyHeader = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(25), 0, dp(12)) }
         historyHeader.addView(label("SESSION HISTORY", 16f, white, true), LinearLayout.LayoutParams(0, -2, 1f))
+        val clearHistory = label("CLEAR ALL", 9f, red, true).apply {
+            setPadding(dp(9), dp(9), dp(9), dp(9))
+            isClickable = true
+            setOnClickListener { confirmClearHistory() }
+        }
+        historyHeader.addView(clearHistory)
         val pdf = actionButton("EXPORT PDF", 0xFF153039.toInt(), cyan) { exportPdf() }.apply { textSize = 10f }
-        historyHeader.addView(pdf, LinearLayout.LayoutParams(dp(112), dp(38)))
+        historyHeader.addView(pdf, LinearLayout.LayoutParams(dp(104), dp(38)))
         content.addView(historyHeader)
         historyList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(historyList)
-        content.addView(label("RMG TIMER  ·  EVERY SECOND COUNTS", 9f, 0xFF6F91B8.toInt(), true).apply {
+        val poweredText = TextView(this).apply {
+            val full = "Powered by: Shorif Uddin Suzan"
+            val span = SpannableString(full)
+            span.setSpan(object : ClickableSpan() {
+                override fun onClick(widget: View) {
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/shorifsuzan"))) }
+                    catch (_: Exception) { Toast.makeText(this@MainActivity, "Unable to open Facebook", Toast.LENGTH_SHORT).show() }
+                }
+            }, 12, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            text = span
+            textSize = 10f
+            setTextColor(muted)
             gravity = Gravity.CENTER
-            letterSpacing = .08f
-            setPadding(0, dp(27), 0, 0)
-        })
+            movementMethod = LinkMovementMethod.getInstance()
+            highlightColor = android.graphics.Color.TRANSPARENT
+            setPadding(0, dp(27), 0, dp(8))
+        }
+        content.addView(poweredText)
 
         scroll.addView(content)
         root.addView(scroll)
@@ -284,17 +300,38 @@ class MainActivity : ComponentActivity() {
         timerText.text = formatTime(total)
         stateText.text = "SESSION COMPLETED"
         updateControls()
+        val dialogContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(8), dp(22), dp(8))
+            background = rounded(panel, 18)
+        }
+        dialogContent.addView(label("SAVE THIS SESSION", 17f, white, true).apply {
+            setPadding(0, dp(4), 0, dp(8))
+        })
+        dialogContent.addView(label("Give your stopwatch record a name.", 13f, muted, false).apply {
+            setPadding(0, 0, 0, dp(14))
+        })
         val input = EditText(this).apply {
             hint = "e.g. Morning practice"
             setSingleLine(true)
+            textSize = 16f
             setTextColor(white)
             setHintTextColor(muted)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            backgroundTintList = ColorStateList.valueOf(orange)
+            setPadding(dp(4), dp(10), dp(4), dp(10))
         }
-        AlertDialog.Builder(this)
-            .setTitle("Save this session")
-            .setMessage("Give your stopwatch record a name.")
-            .setView(input)
-            .setPositiveButton("SAVE") { _, _ ->
+        dialogContent.addView(input, LinearLayout.LayoutParams(-1, -2))
+        val saveDialog = AlertDialog.Builder(this)
+            .setView(dialogContent)
+            .setPositiveButton("SAVE", null)
+            .setNegativeButton("DISCARD") { _, _ -> latestSession = null }
+            .create()
+        saveDialog.setOnShowListener {
+            saveDialog.window?.setBackgroundDrawable(rounded(panel, 20))
+            saveDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(orange)
+            saveDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(muted)
+            saveDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
                 val name = input.text.toString().trim().ifBlank { "Stopwatch Session" }
                 val session = Session(name, SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date()), total, laps.toList())
                 latestSession = session
@@ -302,8 +339,70 @@ class MainActivity : ComponentActivity() {
                 persistHistory()
                 renderHistory()
                 Toast.makeText(this, "Session saved to History", Toast.LENGTH_SHORT).show()
+                saveDialog.dismiss()
             }
-            .setNegativeButton("DISCARD") { _, _ -> latestSession = null }
+            input.requestFocus()
+            saveDialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+        }
+        saveDialog.show()
+    }
+
+    private fun confirmReset() {
+        if (state == State.IDLE && accumulated == 0L && laps.isEmpty()) {
+            Toast.makeText(this, "Stopwatch is already reset", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Reset stopwatch?")
+            .setMessage("Current time and lap splits will be cleared. Saved history will remain safe.")
+            .setNegativeButton("CANCEL", null)
+            .setPositiveButton("RESET") { _, _ -> resetStopwatch() }
+            .show()
+    }
+
+    private fun resetStopwatch() {
+        handler.removeCallbacks(ticker)
+        state = State.IDLE
+        startedAt = 0L
+        accumulated = 0L
+        lastLapMark = 0L
+        laps.clear()
+        latestSession = null
+        timerText.text = formatTime(0L)
+        stateText.text = "READY TO BEGIN"
+        renderLaps()
+        updateControls()
+    }
+
+    private fun confirmDeleteSession(session: Session) {
+        AlertDialog.Builder(this)
+            .setTitle("Delete saved session?")
+            .setMessage("\"${session.name}\" will be permanently removed from history.")
+            .setNegativeButton("CANCEL", null)
+            .setPositiveButton("DELETE") { _, _ ->
+                history.remove(session)
+                if (latestSession == session) latestSession = null
+                persistHistory()
+                renderHistory()
+            }
+            .show()
+    }
+
+    private fun confirmClearHistory() {
+        if (history.isEmpty()) {
+            Toast.makeText(this, "History is already empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Clear all history?")
+            .setMessage("All saved sessions will be permanently deleted.")
+            .setNegativeButton("CANCEL", null)
+            .setPositiveButton("CLEAR ALL") { _, _ ->
+                history.clear()
+                latestSession = null
+                persistHistory()
+                renderHistory()
+            }
             .show()
     }
 
@@ -316,10 +415,9 @@ class MainActivity : ComponentActivity() {
             State.RUNNING -> "PAUSE"
             State.PAUSED -> "RESUME"
         }
-        primaryButton.setTextColor(0xFF06142B.toInt())
-        primaryButton.background = rounded(if (state == State.RUNNING) 0xFFFFB900.toInt() else orange, 18)
-        primaryButton.text = when (state) { State.IDLE -> "▶   START"; State.RUNNING -> "Ⅱ   PAUSE"; State.PAUSED -> "▶   RESUME" }
-        secondaryButton.text = if (state == State.IDLE) "⚑   LAP" else "⚑   LAP  ·  HOLD TO STOP"
+        primaryButton.setTextColor(if (state == State.RUNNING) white else bg)
+        primaryButton.background = rounded(if (state == State.RUNNING) 0xFF247E78.toInt() else cyan, 18)
+        secondaryButton.text = if (state == State.IDLE) "LAP" else "LAP  /  HOLD TO STOP"
         secondaryButton.isEnabled = state != State.IDLE
         secondaryButton.alpha = if (state == State.IDLE) .5f else 1f
         lapCountText.text = laps.size.toString()
@@ -361,10 +459,24 @@ class MainActivity : ComponentActivity() {
                 setOnClickListener { latestSession = session; exportPdf() }
             }
             val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-            top.addView(label(session.name, 14f, white, true), LinearLayout.LayoutParams(0, -2, 1f))
-            top.addView(label(formatTime(session.total), 13f, cyan, true))
+            val sessionTitle = label(session.name, 14f, white, true).apply {
+                isClickable = true
+                setOnClickListener { latestSession = session; exportPdf() }
+            }
+            top.addView(sessionTitle, LinearLayout.LayoutParams(0, -2, 1f))
+            top.addView(label(formatTime(session.total), 13f, cyan, true).apply {
+                isClickable = true
+                setOnClickListener { latestSession = session; exportPdf() }
+            })
             card.addView(top)
-            card.addView(label("${session.date}   ·   ${session.laps.size} laps", 10f, muted, false).apply { setPadding(0, dp(6), 0, 0) })
+            val bottom = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            bottom.addView(label("${session.date}   ·   ${session.laps.size} laps", 10f, muted, false), LinearLayout.LayoutParams(0, -2, 1f))
+            bottom.addView(label("DELETE", 9f, red, true).apply {
+                setPadding(dp(10), dp(8), dp(4), dp(4))
+                isClickable = true
+                setOnClickListener { confirmDeleteSession(session) }
+            })
+            card.addView(bottom)
             historyList.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(9) })
         }
     }
@@ -398,7 +510,7 @@ class MainActivity : ComponentActivity() {
             c.drawText("RMG TIMER", 42f, 58f, p)
             p.textSize = 13f
             p.color = android.graphics.Color.rgb(40, 160, 150)
-            c.drawText("TIME STUDY SESSION REPORT", 42f, 82f, p)
+            c.drawText("PRECISION TIME STUDY REPORT", 42f, 82f, p)
             p.color = android.graphics.Color.DKGRAY
             p.textSize = 17f
             c.drawText(session.name, 42f, 132f, p)
@@ -436,13 +548,13 @@ class MainActivity : ComponentActivity() {
         history.take(100).forEach { s ->
             arr.put(JSONObject().put("name", s.name).put("date", s.date).put("total", s.total).put("laps", JSONArray(s.laps)))
         }
-        getSharedPreferences("rmg_timer", MODE_PRIVATE).edit().putString("history", arr.toString()).apply()
+        getSharedPreferences("chronoflow", MODE_PRIVATE).edit().putString("history", arr.toString()).apply()
     }
 
     private fun loadHistory(): MutableList<Session> {
         val out = mutableListOf<Session>()
         try {
-            val arr = JSONArray(getSharedPreferences("rmg_timer", MODE_PRIVATE).getString("history", "[]"))
+            val arr = JSONArray(getSharedPreferences("chronoflow", MODE_PRIVATE).getString("history", "[]"))
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
                 val a = o.getJSONArray("laps")
