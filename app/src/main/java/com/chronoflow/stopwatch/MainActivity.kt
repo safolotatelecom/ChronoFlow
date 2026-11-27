@@ -340,7 +340,7 @@ class MainActivity : ComponentActivity() {
 
         val formScroll = ScrollView(this).apply {
             isFillViewport = false
-            addView(form, ScrollView.LayoutParams(-1, -2))
+            addView(form, ViewGroup.LayoutParams(-1, -2))
         }
         val dialog = AlertDialog.Builder(this)
             .setView(formScroll)
