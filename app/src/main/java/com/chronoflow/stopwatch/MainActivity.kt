@@ -686,7 +686,7 @@ class MainActivity : ComponentActivity() {
                 if (pageIndex == 0) {
                     text(session.name.take(48), 38f, 145f, 18f, navy, true)
                     text("Date: ${session.date}", 38f, 166f, 10f, grey)
-                    rect(32f, 188f, 563f, 330f, blue)
+                    rect(32f, 188f, 563f, 350f, blue)
                     text("OPERATOR INFORMATION", 50f, 215f, 11f, teal, true)
                     text("Name", 50f, 244f, 9f, android.graphics.Color.LTGRAY, true)
                     text(session.operator.name.take(34), 50f, 263f, 14f, android.graphics.Color.WHITE, true)
@@ -699,25 +699,25 @@ class MainActivity : ComponentActivity() {
                     text("Allowance", 50f, 337f, 9f, android.graphics.Color.LTGRAY, true)
                     text(formatPercent(session.operator.allowance), 130f, 337f, 12f, yellow, true)
 
-                    rect(32f, 350f, 563f, 477f, 0xFFEAF4FA.toInt())
-                    text("TIME STUDY SUMMARY", 50f, 375f, 10f, navy, true)
-                    text("Average lap", 50f, 400f, 9f, grey, true)
-                    text(if (avgMs > 0.0) formatTime(avgMs.toLong()) else "N/A", 50f, 424f, 15f, navy, true)
-                    text("Allowed time", 230f, 400f, 9f, grey, true)
-                    text(if (allowedMs > 0.0) formatTime(allowedMs.toLong()) else "N/A", 230f, 424f, 15f, navy, true)
-                    text("Total time", 410f, 400f, 9f, grey, true)
-                    text(formatTime(session.total), 410f, 424f, 15f, navy, true)
+                    rect(32f, 360f, 563f, 487f, 0xFFEAF4FA.toInt())
+                    text("TIME STUDY SUMMARY", 50f, 385f, 10f, navy, true)
+                    text("Average lap", 50f, 410f, 9f, grey, true)
+                    text(if (avgMs > 0.0) formatTime(avgMs.toLong()) else "N/A", 50f, 434f, 15f, navy, true)
+                    text("Allowed time", 230f, 410f, 9f, grey, true)
+                    text(if (allowedMs > 0.0) formatTime(allowedMs.toLong()) else "N/A", 230f, 434f, 15f, navy, true)
+                    text("Total time", 410f, 410f, 9f, grey, true)
+                    text(formatTime(session.total), 410f, 434f, 15f, navy, true)
                     rect(32f, 490f, 563f, 575f, navy)
                     text("OPERATOR CAPACITY / HOUR", 50f, 516f, 10f, teal, true)
                     text(if (capacity > 0.0) String.format(Locale.US, "%.2f PCS / HOUR", capacity) else "NOT AVAILABLE - RECORD LAP SPLITS", 50f, 552f, if (capacity > 0.0) 25f else 12f, yellow, true)
                     text("CAPACITY = 3600 ÷ ALLOWED TIME (SECONDS)", 50f, 597f, 9f, grey, true)
-                    text("LAP BREAKDOWN", 38f, 638f, 12f, navy, true)
+                    text("LAP BREAKDOWN", 38f, 648f, 12f, navy, true)
                 } else {
                     text("LAP BREAKDOWN (CONTINUED)", 38f, 145f, 14f, navy, true)
                 }
                 val startRow = if (pageIndex == 0) 0 else 5 + (pageIndex - 1) * 24
                 val endRow = if (pageIndex == 0) minOf(session.laps.size, 5) else minOf(session.laps.size, startRow + 24)
-                var y = if (pageIndex == 0) 665f else 185f
+                var y = if (pageIndex == 0) 675f else 185f
                 if (pageIndex == 0) {
                     text("LAP", 48f, y, 9f, grey, true)
                     text("SPLIT TIME", 460f, y, 9f, grey, true)
