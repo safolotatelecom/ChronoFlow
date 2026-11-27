@@ -32,7 +32,20 @@ import kotlin.math.max
 
 class MainActivity : ComponentActivity() {
     private enum class State { IDLE, RUNNING, PAUSED }
-    private data class Session(val name: String, val date: String, val total: Long, val laps: List<Long>)
+    private data class OperatorInfo(
+        val name: String,
+        val id: String,
+        val style: String,
+        val process: String,
+        val allowance: Double
+    )
+    private data class Session(
+        val name: String,
+        val date: String,
+        val total: Long,
+        val laps: List<Long>,
+        val operator: OperatorInfo
+    )
 
     private val bg = 0xFF061329.toInt()
     private val panel = 0xFF0D2142.toInt()
@@ -50,6 +63,7 @@ class MainActivity : ComponentActivity() {
     private val laps = mutableListOf<Long>()
     private var history = mutableListOf<Session>()
     private var latestSession: Session? = null
+    private var operatorInfo: OperatorInfo? = null
     private var volumeDownLongPressed = false
     private val handler = Handler(Looper.getMainLooper())
 
@@ -59,6 +73,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var lapCountText: TextView
     private lateinit var averageText: TextView
     private lateinit var bestText: TextView
+    private lateinit var capacityText: TextView
+    private lateinit var operatorSummary: TextView
     private lateinit var lapList: LinearLayout
     private lateinit var historyList: LinearLayout
     private lateinit var primaryButton: Button
@@ -92,6 +108,7 @@ class MainActivity : ComponentActivity() {
         buildScreen()
         renderHistory()
         updateControls()
+        showOperatorEntryDialog()
     }
 
     private fun buildScreen() {
@@ -122,6 +139,12 @@ class MainActivity : ComponentActivity() {
         dateText = label(today, 10f, cyan, true).apply { setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF153039.toInt(), 30) }
         header.addView(dateText)
         content.addView(header)
+        operatorSummary = label("OPERATOR DETAILS  ·  ENTER TO BEGIN", 10f, muted, true).apply {
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = rounded(panelAlt, 14)
+            setOnClickListener { showOperatorEntryDialog() }
+        }
+        content.addView(operatorSummary, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
 
         // Timer hero
         val hero = LinearLayout(this).apply {
@@ -187,7 +210,21 @@ class MainActivity : ComponentActivity() {
         stats.addView(statAvg.first, LinearLayout.LayoutParams(0, -2, 1f))
         stats.addView(statBest.first, LinearLayout.LayoutParams(0, -2, 1f))
         hero.addView(stats)
-        content.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(25) })
+        val capacityCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+            background = rounded(0xFF092D4A.toInt(), 15)
+        }
+        capacityCard.addView(label("OPERATOR CAPACITY / HOUR", 9f, muted, true))
+        capacityText = label("— PCS / HR", 25f, cyan, true).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dp(5), 0, 0)
+            includeFontPadding = false
+        }
+        capacityCard.addView(capacityText)
+        hero.addView(capacityCard, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(17) })
+        content.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(18) })
 
         // Exactly two multifunction controls
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; setPadding(0, dp(18), 0, dp(7)) }
@@ -244,7 +281,7 @@ class MainActivity : ComponentActivity() {
             gravity = Gravity.CENTER
             movementMethod = LinkMovementMethod.getInstance()
             highlightColor = android.graphics.Color.TRANSPARENT
-            setPadding(0, dp(22), 0, dp(18))
+            setPadding(0, dp(27), 0, dp(8))
         }
         content.addView(poweredText)
 
@@ -269,6 +306,86 @@ class MainActivity : ComponentActivity() {
         addView(label(title, 15f, white, true), LinearLayout.LayoutParams(0, -2, 1f))
         addView(label(subtitle, 9f, muted, true))
     }
+
+    private fun showOperatorEntryDialog() {
+        val prefs = getSharedPreferences("chronoflow", MODE_PRIVATE)
+        val form = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(10), dp(22), dp(6))
+            background = rounded(panel, 20)
+        }
+        form.addView(label("NEW TIME STUDY", 18f, white, true).apply { setPadding(0, 0, 0, dp(5)) })
+        form.addView(label("Enter operator and operation details to begin.", 11f, muted, false).apply { setPadding(0, 0, 0, dp(12)) })
+        fun field(title: String, key: String, hintText: String, inputType: Int = android.text.InputType.TYPE_CLASS_TEXT): EditText {
+            form.addView(label(title.uppercase(Locale.getDefault()), 9f, cyan, true).apply { setPadding(0, dp(7), 0, dp(3)) })
+            return EditText(this).apply {
+                hint = hintText
+                setText(prefs.getString(key, "") ?: "")
+                setSingleLine(true)
+                textSize = 15f
+                setTextColor(white)
+                setHintTextColor(muted)
+                this.inputType = inputType
+                backgroundTintList = ColorStateList.valueOf(orange)
+                setPadding(dp(5), dp(7), dp(5), dp(7))
+                form.addView(this, LinearLayout.LayoutParams(-1, dp(44)))
+            }
+        }
+        val nameInput = field("Name", "operator_name", "Operator name", android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+        val idInput = field("ID", "operator_id", "Employee ID")
+        val styleInput = field("Style", "operator_style", "Style number")
+        val processInput = field("Process", "operator_process", "Operation / process")
+        val allowanceInput = field("Allowance %", "operator_allowance", "Example: 15", android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL)
+        if (prefs.getString("operator_allowance", null) == null) allowanceInput.setText("0")
+
+        val formScroll = ScrollView(this).apply {
+            isFillViewport = false
+            addView(form, ScrollView.LayoutParams(-1, -2))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setView(formScroll)
+            .setPositiveButton("SAVE & CONTINUE", null)
+            .setNegativeButton("CANCEL", null)
+            .create()
+        dialog.setCancelable(false)
+        dialog.setCanceledOnTouchOutside(false)
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawable(rounded(panel, 20))
+            dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(orange)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(muted)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setOnClickListener {
+                if (operatorInfo == null) {
+                    Toast.makeText(this, "Please enter the required details to continue", Toast.LENGTH_SHORT).show()
+                } else dialog.dismiss()
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                val name = nameInput.text.toString().trim()
+                val id = idInput.text.toString().trim()
+                val style = styleInput.text.toString().trim()
+                val process = processInput.text.toString().trim()
+                val allowance = allowanceInput.text.toString().trim().toDoubleOrNull()
+                if (name.isBlank() || id.isBlank() || style.isBlank() || process.isBlank() || allowance == null || allowance < 0.0) {
+                    Toast.makeText(this, "Fill all fields and enter a valid allowance percentage", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+                operatorInfo = OperatorInfo(name, id, style, process, allowance)
+                prefs.edit()
+                    .putString("operator_name", name)
+                    .putString("operator_id", id)
+                    .putString("operator_style", style)
+                    .putString("operator_process", process)
+                    .putString("operator_allowance", allowance.toString())
+                    .apply()
+                operatorSummary.text = "${name.uppercase(Locale.getDefault())}  ·  ID: $id\nSTYLE: $style  ·  PROCESS: $process  ·  ALLOWANCE: ${formatPercent(allowance)}"
+                updateControls()
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun formatPercent(value: Double): String = if (value % 1.0 == 0.0) "${value.toInt()}%" else String.format(Locale.US, "%.2f%%", value)
 
     private fun primaryAction() {
         when (state) {
@@ -357,7 +474,12 @@ class MainActivity : ComponentActivity() {
             saveDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(muted)
             saveDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
                 val name = input.text.toString().trim().ifBlank { "Stopwatch Session" }
-                val session = Session(name, SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date()), total, laps.toList())
+                val operator = operatorInfo
+                if (operator == null) {
+                    Toast.makeText(this, "Enter operator details first", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val session = Session(name, SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date()), total, laps.toList(), operator)
                 latestSession = session
                 history.add(0, session)
                 persistHistory()
@@ -445,9 +567,13 @@ class MainActivity : ComponentActivity() {
         secondaryButton.isEnabled = state != State.IDLE
         secondaryButton.alpha = if (state == State.IDLE) .5f else 1f
         lapCountText.text = laps.size.toString()
-        val avg = if (laps.isNotEmpty()) laps.average().toLong() else 0L
-        averageText.text = if (laps.isNotEmpty()) formatShort(avg) else "—"
+        val avg = if (laps.isNotEmpty()) laps.average() else 0.0
+        averageText.text = if (laps.isNotEmpty()) formatShort(avg.toLong()) else "—"
         bestText.text = if (laps.isNotEmpty()) formatShort(laps.minOrNull() ?: 0L) else "—"
+        val allowance = operatorInfo?.allowance ?: 0.0
+        val allowedMs = avg * (1.0 + allowance / 100.0)
+        val capacity = if (allowedMs > 0.0) 3_600_000.0 / allowedMs else 0.0
+        capacityText.text = if (capacity > 0.0) String.format(Locale.US, "%.2f PCS / HR", capacity) else "— PCS / HR"
     }
 
     private fun renderLaps() {
@@ -523,42 +649,96 @@ class MainActivity : ComponentActivity() {
     private fun writePdf(uri: Uri, session: Session) {
         try {
             val doc = PdfDocument()
-            val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-            val page = doc.startPage(pageInfo)
-            val c: Canvas = page.canvas
-            val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = android.graphics.Color.rgb(15, 29, 48)
-                textSize = 25f
-                typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            val pageWidth = 595
+            val pageHeight = 842
+            val avgMs = if (session.laps.isNotEmpty()) session.laps.average() else 0.0
+            val allowedMs = avgMs * (1.0 + session.operator.allowance / 100.0)
+            val capacity = if (allowedMs > 0.0) 3_600_000.0 / allowedMs else 0.0
+            val pageCount = if (session.laps.size <= 5) 1 else 1 + (session.laps.size - 5 + 23) / 24
+            for (pageIndex in 0 until pageCount) {
+                val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageIndex + 1).create()
+                val page = doc.startPage(pageInfo)
+                val c = page.canvas
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+                fun text(value: String, x: Float, y: Float, size: Float, color: Int, bold: Boolean = false) {
+                    paint.color = color
+                    paint.textSize = size
+                    paint.typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
+                    c.drawText(value, x, y, paint)
+                }
+                fun rect(left: Float, top: Float, right: Float, bottom: Float, color: Int, radius: Float = 12f) {
+                    paint.color = color
+                    paint.style = Paint.Style.FILL
+                    c.drawRoundRect(left, top, right, bottom, radius, radius, paint)
+                }
+                val navy = android.graphics.Color.rgb(6, 19, 41)
+                val blue = android.graphics.Color.rgb(13, 33, 66)
+                val teal = android.graphics.Color.rgb(22, 189, 242)
+                val yellow = android.graphics.Color.rgb(255, 210, 31)
+                val dark = android.graphics.Color.rgb(24, 39, 59)
+                val grey = android.graphics.Color.rgb(104, 119, 139)
+                c.drawColor(android.graphics.Color.WHITE)
+                rect(0f, 0f, pageWidth.toFloat(), 112f, navy, 0f)
+                text("RMG TIMER", 38f, 48f, 27f, android.graphics.Color.WHITE, true)
+                text("PRECISION TIME STUDY REPORT", 40f, 72f, 11f, teal, true)
+                text("REPORT  ${pageIndex + 1} / $pageCount", 440f, 48f, 9f, android.graphics.Color.WHITE, true)
+
+                if (pageIndex == 0) {
+                    text(session.name.take(48), 38f, 145f, 18f, navy, true)
+                    text("Date: ${session.date}", 38f, 166f, 10f, grey)
+                    rect(32f, 188f, 563f, 330f, blue)
+                    text("OPERATOR INFORMATION", 50f, 215f, 11f, teal, true)
+                    text("Name", 50f, 244f, 9f, android.graphics.Color.LTGRAY, true)
+                    text(session.operator.name.take(34), 50f, 263f, 14f, android.graphics.Color.WHITE, true)
+                    text("ID", 315f, 244f, 9f, android.graphics.Color.LTGRAY, true)
+                    text(session.operator.id.take(28), 315f, 263f, 14f, android.graphics.Color.WHITE, true)
+                    text("Style", 50f, 291f, 9f, android.graphics.Color.LTGRAY, true)
+                    text(session.operator.style.take(32), 50f, 310f, 13f, android.graphics.Color.WHITE, true)
+                    text("Process", 315f, 291f, 9f, android.graphics.Color.LTGRAY, true)
+                    text(session.operator.process.take(30), 315f, 310f, 13f, android.graphics.Color.WHITE, true)
+                    text("Allowance", 50f, 337f, 9f, android.graphics.Color.LTGRAY, true)
+                    text(formatPercent(session.operator.allowance), 130f, 337f, 12f, yellow, true)
+
+                    rect(32f, 350f, 563f, 477f, 0xFFEAF4FA.toInt())
+                    text("TIME STUDY SUMMARY", 50f, 375f, 10f, navy, true)
+                    text("Average lap", 50f, 400f, 9f, grey, true)
+                    text(if (avgMs > 0.0) formatTime(avgMs.toLong()) else "N/A", 50f, 424f, 15f, navy, true)
+                    text("Allowed time", 230f, 400f, 9f, grey, true)
+                    text(if (allowedMs > 0.0) formatTime(allowedMs.toLong()) else "N/A", 230f, 424f, 15f, navy, true)
+                    text("Total time", 410f, 400f, 9f, grey, true)
+                    text(formatTime(session.total), 410f, 424f, 15f, navy, true)
+                    rect(32f, 490f, 563f, 575f, navy)
+                    text("OPERATOR CAPACITY / HOUR", 50f, 516f, 10f, teal, true)
+                    text(if (capacity > 0.0) String.format(Locale.US, "%.2f PCS / HOUR", capacity) else "NOT AVAILABLE - RECORD LAP SPLITS", 50f, 552f, if (capacity > 0.0) 25f else 12f, yellow, true)
+                    text("CAPACITY = 3600 ÷ ALLOWED TIME (SECONDS)", 50f, 597f, 9f, grey, true)
+                    text("LAP BREAKDOWN", 38f, 638f, 12f, navy, true)
+                } else {
+                    text("LAP BREAKDOWN (CONTINUED)", 38f, 145f, 14f, navy, true)
+                }
+                val startRow = if (pageIndex == 0) 0 else 5 + (pageIndex - 1) * 24
+                val endRow = if (pageIndex == 0) minOf(session.laps.size, 5) else minOf(session.laps.size, startRow + 24)
+                var y = if (pageIndex == 0) 665f else 185f
+                if (pageIndex == 0) {
+                    text("LAP", 48f, y, 9f, grey, true)
+                    text("SPLIT TIME", 460f, y, 9f, grey, true)
+                    y += 20f
+                } else {
+                    text("LAP", 48f, y, 9f, grey, true)
+                    text("SPLIT TIME", 460f, y, 9f, grey, true)
+                    y += 20f
+                }
+                if (session.laps.isEmpty() && pageIndex == 0) {
+                    text("No lap splits recorded in this session.", 48f, y + 10f, 10f, grey)
+                }
+                for (i in startRow until endRow) {
+                    if (i % 2 == 0) rect(38f, y - 14f, 557f, y + 8f, 0xFFF1F5F9.toInt(), 4f)
+                    text("LAP ${(i + 1).toString().padStart(2, '0')}", 48f, y, 10f, dark, true)
+                    text(formatTime(session.laps[i]), 460f, y, 10f, dark, true)
+                    y += 25f
+                }
+                text("Powered by: Shorif Uddin Suzan  ·  facebook.com/shorifsuzan", 38f, 817f, 8f, grey)
+                doc.finishPage(page)
             }
-            c.drawText("RMG TIMER", 42f, 58f, p)
-            p.textSize = 13f
-            p.color = android.graphics.Color.rgb(40, 160, 150)
-            c.drawText("PRECISION TIME STUDY REPORT", 42f, 82f, p)
-            p.color = android.graphics.Color.DKGRAY
-            p.textSize = 17f
-            c.drawText(session.name, 42f, 132f, p)
-            p.textSize = 11f
-            c.drawText("Date: ${session.date}", 42f, 157f, p)
-            p.textSize = 14f
-            p.typeface = Typeface.DEFAULT_BOLD
-            c.drawText("Total time: ${formatTime(session.total)}", 42f, 196f, p)
-            val avg = if (session.laps.isNotEmpty()) session.laps.average().toLong() else 0L
-            c.drawText("Lap quantity: ${session.laps.size}", 42f, 222f, p)
-            c.drawText("Lap average: ${if (session.laps.isEmpty()) "—" else formatTime(avg)}", 42f, 248f, p)
-            p.textSize = 12f
-            p.color = android.graphics.Color.rgb(40, 160, 150)
-            c.drawText("LAP DETAILS", 42f, 294f, p)
-            p.color = android.graphics.Color.DKGRAY
-            p.typeface = Typeface.DEFAULT
-            var y = 322f
-            session.laps.forEachIndexed { i, value ->
-                if (y > 790f) return@forEachIndexed
-                c.drawText("Lap ${(i + 1).toString().padStart(2, '0')}", 48f, y, p)
-                c.drawText(formatTime(value), 450f, y, p)
-                y += 25f
-            }
-            doc.finishPage(page)
             contentResolver.openOutputStream(uri)?.use { doc.writeTo(it) }
             doc.close()
             Toast.makeText(this, "PDF report saved", Toast.LENGTH_LONG).show()
@@ -570,7 +750,13 @@ class MainActivity : ComponentActivity() {
     private fun persistHistory() {
         val arr = JSONArray()
         history.take(100).forEach { s ->
-            arr.put(JSONObject().put("name", s.name).put("date", s.date).put("total", s.total).put("laps", JSONArray(s.laps)))
+            val op = JSONObject()
+                .put("name", s.operator.name)
+                .put("id", s.operator.id)
+                .put("style", s.operator.style)
+                .put("process", s.operator.process)
+                .put("allowance", s.operator.allowance)
+            arr.put(JSONObject().put("name", s.name).put("date", s.date).put("total", s.total).put("laps", JSONArray(s.laps)).put("operator", op))
         }
         getSharedPreferences("chronoflow", MODE_PRIVATE).edit().putString("history", arr.toString()).apply()
     }
@@ -583,7 +769,15 @@ class MainActivity : ComponentActivity() {
                 val o = arr.getJSONObject(i)
                 val a = o.getJSONArray("laps")
                 val ls = (0 until a.length()).map { a.getLong(it) }
-                out.add(Session(o.getString("name"), o.getString("date"), o.getLong("total"), ls))
+                val op = o.optJSONObject("operator") ?: JSONObject()
+                val operator = OperatorInfo(
+                    op.optString("name", "Unknown"),
+                    op.optString("id", "—"),
+                    op.optString("style", "—"),
+                    op.optString("process", "—"),
+                    op.optDouble("allowance", 0.0)
+                )
+                out.add(Session(o.getString("name"), o.getString("date"), o.getLong("total"), ls, operator))
             }
         } catch (_: Exception) { }
         return out
