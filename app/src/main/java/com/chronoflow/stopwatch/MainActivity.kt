@@ -244,7 +244,7 @@ class MainActivity : ComponentActivity() {
             gravity = Gravity.CENTER
             movementMethod = LinkMovementMethod.getInstance()
             highlightColor = android.graphics.Color.TRANSPARENT
-            setPadding(0, dp(22), 0, dp(13))
+            setPadding(0, dp(22), 0, dp(18))
         }
         content.addView(poweredText)
 
