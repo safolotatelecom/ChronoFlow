@@ -377,7 +377,7 @@ Volume Up: Start / Pause / Resume.
 Volume Down: Record a lap. Press and hold Volume Down to stop the session.
 
 10. POWERED BY
-RMG Timer is powered by Shorif Uddin Suzan."""
+RMG Timer is powered by safolota.com."""
         val body = TextView(this).apply {
             text = manualText
             textSize = 14f
