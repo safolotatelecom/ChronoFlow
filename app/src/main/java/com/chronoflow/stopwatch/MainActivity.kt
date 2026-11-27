@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     private enum class State { IDLE, RUNNING, PAUSED }
@@ -152,8 +153,21 @@ class MainActivity : ComponentActivity() {
         brandColumn.addView(label("PRECISION TIME STUDY", 9f, orange, true).apply { setPadding(0, dp(3), 0, 0); letterSpacing = .12f })
         header.addView(brandColumn, LinearLayout.LayoutParams(0, -2, 1f))
         val today = SimpleDateFormat("EEE, dd MMM", Locale.getDefault()).format(Date()).uppercase(Locale.getDefault())
-        dateText = label(today, 10f, cyan, true).apply { setPadding(dp(10), dp(8), dp(10), dp(8)); background = rounded(0xFF153039.toInt(), 30) }
+        dateText = label(today, 9.5f, cyan, true).apply {
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            background = rounded(0xFF153039.toInt(), 30)
+            gravity = Gravity.CENTER
+        }
         header.addView(dateText)
+        val helpButton = label("?", 15f, white, true).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(10), dp(5), dp(10), dp(5))
+            background = rounded(panelAlt, 30)
+            contentDescription = "Help and user manual"
+            isClickable = true
+            setOnClickListener { showUserManualDialog() }
+        }
+        header.addView(helpButton, LinearLayout.LayoutParams(dp(32), dp(32)).apply { leftMargin = dp(5) })
         content.addView(header)
         operatorSummary = label("REPORT & OPERATOR SETUP  ·  TAP TO EDIT", 10f, muted, true).apply {
             setPadding(dp(14), dp(12), dp(14), dp(12))
@@ -266,7 +280,13 @@ class MainActivity : ComponentActivity() {
             background = rounded(panel, 19)
             setPadding(dp(15), dp(5), dp(15), dp(5))
         }
-        content.addView(lapList)
+        val lapScroll = ScrollView(this).apply {
+            isFillViewport = false
+            isNestedScrollingEnabled = true
+            overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+            addView(lapList, ViewGroup.LayoutParams(-1, -2))
+        }
+        content.addView(lapScroll, LinearLayout.LayoutParams(-1, dp(300)))
 
         // History and PDF
         val historyHeader = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(25), 0, dp(12)) }
@@ -321,6 +341,61 @@ class MainActivity : ComponentActivity() {
         setPadding(0, dp(20), 0, dp(10))
         addView(label(title, 15f, white, true), LinearLayout.LayoutParams(0, -2, 1f))
         addView(label(subtitle, 9f, muted, true))
+    }
+
+    private fun showUserManualDialog() {
+        val manualText = """RMG TIMER — USER MANUAL
+
+1. FIRST-TIME SETUP
+Enter your Company Name, Prepared By, and operator details. These details are saved on this device and reused in future reports. Tap the setup information card to edit them at any time.
+
+2. START, PAUSE AND RESUME
+Tap START to begin the stopwatch. Tap PAUSE to pause it. Tap RESUME to continue from the paused time.
+
+3. RECORD A LAP
+While the stopwatch is running, tap LAP to record the current split time. You can record at least 250 laps in one session. The Lap Breakdown panel shows the latest six entries first; scroll inside that panel to view older laps.
+
+4. STOP AND SAVE
+Press and hold the LAP button to stop the stopwatch. Enter a session name when prompted and save the session to History.
+
+5. RESET
+Tap RESET to clear the current stopwatch and lap splits. Confirm the action when asked. Reset does not delete previously saved History records.
+
+6. SESSION HISTORY
+Saved sessions appear under Session History. Use the available history controls to review or clear saved records.
+
+7. EXPORT PDF REPORT
+Choose EXPORT PDF to create a report for the selected completed session. The report includes company and operator information, average lap time, allowance, allowed time, total time, operator capacity, and lap breakdown. Lap columns are arranged automatically to fit the report page.
+
+8. OPERATOR CAPACITY
+Allowed Time = Average Lap × (1 + Allowance % ÷ 100).
+Capacity per Hour = 3600 ÷ Allowed Time (seconds).
+Capacity is displayed as a whole number, rounded to the nearest integer (half values round up).
+
+9. VOLUME BUTTON SHORTCUTS
+Volume Up: Start / Pause / Resume.
+Volume Down: Record a lap. Press and hold Volume Down to stop the session.
+
+10. POWERED BY
+RMG Timer is powered by Shorif Uddin Suzan."""
+        val body = TextView(this).apply {
+            text = manualText
+            textSize = 14f
+            setTextColor(white)
+            setLineSpacing(dp(4).toFloat(), 1f)
+            setPadding(dp(20), dp(16), dp(20), dp(16))
+            background = rounded(panel, 18)
+        }
+        val scroll = ScrollView(this).apply {
+            isFillViewport = false
+            addView(body, ViewGroup.LayoutParams(-1, -2))
+        }
+        AlertDialog.Builder(this)
+            .setTitle("RMG Timer Help")
+            .setView(scroll)
+            .setPositiveButton("CLOSE", null)
+            .show()
+            .apply { getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(orange) }
     }
 
     private fun showOperatorEntryDialog() {
@@ -606,7 +681,7 @@ class MainActivity : ComponentActivity() {
         val allowance = operatorInfo?.allowance ?: 0.0
         val allowedMs = avg * (1.0 + allowance / 100.0)
         val capacity = if (allowedMs > 0.0) 3_600_000.0 / allowedMs else 0.0
-        capacityText.text = if (capacity > 0.0) String.format(Locale.US, "%.2f PCS / HR", capacity) else "— PCS / HR"
+        capacityText.text = if (capacity > 0.0) String.format(Locale.US, "%,d PCS / HR", capacity.roundToInt()) else "— PCS / HR"
     }
 
     private fun renderLaps() {
@@ -619,7 +694,7 @@ class MainActivity : ComponentActivity() {
         laps.indices.reversed().forEach { index ->
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(4), dp(12), dp(4), dp(12)) }
             row.addView(label("LAP ${(index + 1).toString().padStart(2, '0')}", 12f, muted, true), LinearLayout.LayoutParams(0, -2, 1f))
-            row.addView(label(formatTime(laps[index]), 14f, white, true))
+            row.addView(label(formatLapTime(laps[index]), 14f, white, true))
             lapList.addView(row)
             if (index != 0) lapList.addView(View(this).apply { setBackgroundColor(0xFF243147.toInt()) }, LinearLayout.LayoutParams(-1, dp(1)))
         }
@@ -763,11 +838,10 @@ class MainActivity : ComponentActivity() {
                 "Allowance" to formatPercent(session.operator.allowance)
             )
             info.forEachIndexed { index, pair ->
-                val x = infoLeft + index * infoWidth
-                drawText(pair.first, x, 205f, 8.5f, 0xFFD1D9E5.toInt())
+                val centerX = infoLeft + index * infoWidth + infoWidth / 2f
                 val value = fit(pair.second, infoWidth - 8f, 11.5f, index == 4)
-                if (index == 4) drawRight(value, x + infoWidth - 2f, 232f, 11.5f, yellow, true)
-                else drawText(value, x, 232f, 11.5f, white, false)
+                drawCentered(pair.first, centerX, 205f, 8.5f, 0xFFD1D9E5.toInt(), false)
+                drawCentered(value, centerX, 232f, 11.5f, if (index == 4) yellow else white, index == 4)
             }
 
             // Time-study summary
@@ -787,19 +861,18 @@ class MainActivity : ComponentActivity() {
             // Capacity highlight
             rect(32f, 382f, 563f, 454f, navy, 13f)
             drawCentered("OPERATOR CAPACITY", 297.5f, 405f, 9.5f, teal, true)
-            val capacityValue = if (capacity > 0.0) String.format(Locale.US, "%.2f", capacity) else "N/A"
+            val capacityValue = if (capacity > 0.0) String.format(Locale.US, "%,d", capacity.roundToInt()) else "N/A"
             drawCentered(capacityValue, 297.5f, 438f, 25f, yellow, true)
             drawCentered("PCS / HOUR", 297.5f, 449f, 7f, teal, true)
             drawRight("CAPACITY = 3600 ÷ ALLOWED TIME (SECONDS)", 563f, 474f, 8f, grey)
 
-            // Keep every lap on ONE page. Add a column for each additional block of ten laps,
-            // up to four columns; row height and type size then adapt to the available space.
+            // Keep at least 250 laps on ONE page using up to five automatically sized columns.
             drawText("LAP BREAKDOWN", 40f, 512f, 12f, navy, true)
             val lapCount = session.laps.size
             if (lapCount == 0) {
                 drawText("No lap splits recorded in this session.", 48f, 550f, 10f, grey)
             } else {
-                val columns = ((lapCount + 9) / 10).coerceIn(1, 4)
+                val columns = ((lapCount + 14) / 15).coerceIn(1, 5)
                 val left = 40f
                 val right = 555f
                 val gap = 9f
@@ -824,13 +897,13 @@ class MainActivity : ComponentActivity() {
                             rect(x, baseline - rowHeight + 2.5f, x + colWidth, baseline + 2f, stripe, 2f)
                         }
                         drawText("LAP ${(index + 1).toString().padStart(2, '0')}", x + 5f, baseline, fontSize, dark, true)
-                        drawRight(formatTime(session.laps[index]), x + colWidth - 5f, baseline, fontSize, dark, true)
+                        drawRight(formatLapTime(session.laps[index]), x + colWidth - 5f, baseline, fontSize, dark, true)
                     }
                 }
             }
 
             // Footer
-            drawText("Powered by: Shorif Uddin Suzan", 40f, 823f, 7.5f, grey)
+            drawText("Powered by: safolota.com", 40f, 823f, 7.5f, grey)
             drawRight("Prepared by: ${fit(session.preparedBy.ifBlank { "—" }, 190f, 7.5f, true)}", 555f, 823f, 7.5f, grey)
             doc.finishPage(page)
             contentResolver.openOutputStream(uri)?.use { output -> doc.writeTo(output) }
@@ -921,6 +994,14 @@ class MainActivity : ComponentActivity() {
         val s = (ms / 1_000) % 60
         val cs = (ms % 1_000) / 10
         return String.format(Locale.US, "%02d:%02d:%02d.%02d", h, m, s, cs)
+    }
+
+    // Lap splits omit the hour field; total minutes are retained for long operations.
+    private fun formatLapTime(ms: Long): String {
+        val totalMinutes = ms / 60_000
+        val seconds = (ms / 1_000) % 60
+        val centiseconds = (ms % 1_000) / 10
+        return String.format(Locale.US, "%02d:%02d.%02d", totalMinutes, seconds, centiseconds)
     }
 
     private fun formatShort(ms: Long): String {
