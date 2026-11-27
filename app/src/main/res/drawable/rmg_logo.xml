@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Deep navy rounded-square brand tile -->
+    <path android:fillColor="#071A3A" android:pathData="M80,0 L432,0 Q512,0 512,80 L512,432 Q512,512 432,512 L80,512 Q0,512 0,432 L0,80 Q0,0 80,0 Z" />
+    <path android:fillColor="#123F8C" android:pathData="M80,18 L432,18 Q494,18 494,80 L494,432 Q494,494 432,494 L80,494 Q18,494 18,432 L18,80 Q18,18 80,18 Z" />
+    <path android:fillColor="#071A3A" android:pathData="M80,34 L432,34 Q478,34 478,80 L478,432 Q478,478 432,478 L80,478 Q34,478 34,432 L34,80 Q34,34 80,34 Z" />
+
+    <!-- Stopwatch crown and top stem -->
+    <path android:fillColor="#F7F9FF" android:pathData="M224,38 L288,38 Q302,38 302,52 L302,72 Q302,86 288,86 L224,86 Q210,86 210,72 L210,52 Q210,38 224,38 Z" />
+    <path android:fillColor="#F7F9FF" android:pathData="M235,78 L277,78 L277,119 L235,119 Z" />
+
+    <!-- Speed streaks -->
+    <path android:fillColor="#FFD21F" android:pathData="M44,208 L153,208 L137,232 L44,232 Q31,232 31,220 Q31,208 44,208 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M32,264 L137,264 L119,288 L32,288 Q20,288 20,276 Q20,264 32,264 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M48,320 L151,320 L132,344 L48,344 Q36,344 36,332 Q36,320 48,320 Z" />
+
+    <!-- Stopwatch dial -->
+    <path android:fillColor="#071A3A" android:pathData="M256,94 A164,164 0,1 0,256 422 A164,164 0,1 0,256 94 Z" />
+    <path android:fillColor="#F5F8FF" android:pathData="M256,108 A150,150 0,1 0,256 408 A150,150 0,1 0,256 108 Z" />
+    <path android:fillColor="#0A2450" android:pathData="M256,126 A132,132 0,1 0,256 390 A132,132 0,1 0,256 126 Z" />
+
+    <!-- Hour marks -->
+    <path android:fillColor="#F5F8FF" android:pathData="M249,139 L263,139 L263,164 L249,164 Z M249,350 L263,350 L263,375 L249,375 Z M139,249 L164,249 L164,263 L139,263 Z M348,249 L373,249 L373,263 L348,263 Z" />
+    <path android:fillColor="#F5F8FF" android:pathData="M176,160 L190,174 L180,184 L166,170 Z M322,328 L336,342 L326,352 L312,338 Z M336,160 L346,170 L332,184 L322,174 Z M166,342 L180,328 L190,338 L176,352 Z" />
+
+    <!-- Stylized running figure in gold -->
+    <path android:fillColor="#FFD21F" android:pathData="M281,169 C298,169 309,181 306,197 C303,211 290,218 277,211 C265,204 266,184 276,174 C278,172 279,170 281,169 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M276,215 C291,211 303,218 306,232 L316,261 L296,270 L285,245 L270,269 L247,258 L263,226 C266,220 270,217 276,215 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M273,224 L247,211 L218,222 L210,210 L246,190 L283,204 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M300,228 L326,210 L346,220 L320,245 L310,264 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M283,257 L300,265 L284,305 L258,334 L239,322 L262,291 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M262,264 L280,278 L254,308 L224,321 L213,305 L241,285 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M258,326 L243,340 L213,349 L202,339 L220,321 L239,313 Z" />
+    <path android:fillColor="#FFD21F" android:pathData="M284,300 L301,304 L318,329 L309,341 L289,327 L274,316 Z" />
+
+    <!-- Small gold motion accent -->
+    <path android:fillColor="#FFD21F" android:pathData="M368,115 L391,92 L413,114 L390,137 Z" />
+</vector>
