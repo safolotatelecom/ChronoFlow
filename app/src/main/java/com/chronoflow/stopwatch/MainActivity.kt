@@ -303,11 +303,11 @@ class MainActivity : ComponentActivity() {
         historyList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(historyList)
         val poweredText = TextView(this).apply {
-            val full = "Powered by: Shorif Uddin Suzan"
+            val full = "Powered by: safolota.com"
             val span = SpannableString(full)
             span.setSpan(object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/shorifsuzan"))) }
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.safolota.com"))) }
                     catch (_: Exception) { Toast.makeText(this@MainActivity, "Unable to open Facebook", Toast.LENGTH_SHORT).show() }
                 }
             }, 12, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
