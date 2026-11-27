@@ -108,12 +108,15 @@ class MainActivity : ComponentActivity() {
         // Brand header
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val brandIcon = ImageView(this).apply {
+            // Use the dedicated RMG stopwatch vector asset without cropping it.
             setImageResource(R.drawable.rmg_logo)
             scaleType = ImageView.ScaleType.FIT_CENTER
+            adjustViewBounds = true
             contentDescription = "RMG Timer stopwatch runner logo"
-            setPadding(dp(1), dp(1), dp(1), dp(1))
+            setPadding(0, 0, 0, 0)
+            setBackgroundColor(android.graphics.Color.TRANSPARENT)
         }
-        header.addView(brandIcon, LinearLayout.LayoutParams(dp(58), dp(58)))
+        header.addView(brandIcon, LinearLayout.LayoutParams(dp(72), dp(72)))
         val brandColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(11), 0, 0, 0) }
         brandColumn.addView(label("RMG TIMER", 18f, white, true).apply { letterSpacing = .06f })
         brandColumn.addView(label("PRECISION TIME STUDY", 9f, orange, true).apply { setPadding(0, dp(3), 0, 0); letterSpacing = .12f })
@@ -234,17 +237,28 @@ class MainActivity : ComponentActivity() {
             val span = SpannableString(full)
             span.setSpan(object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/shorifsuzan"))) }
-                    catch (_: Exception) { Toast.makeText(this@MainActivity, "Unable to open Facebook", Toast.LENGTH_SHORT).show() }
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/shorifsuzan")))
+                    } catch (_: Exception) {
+                        Toast.makeText(this@MainActivity, "Unable to open Facebook", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }, 12, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                override fun updateDrawState(ds: android.text.TextPaint) {
+                    super.updateDrawState(ds)
+                    ds.color = orange
+                    ds.isUnderlineText = true
+                    ds.isFakeBoldText = true
+                }
+            }, full.indexOf("Shorif Uddin Suzan"), full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             text = span
-            textSize = 10f
-            setTextColor(muted)
+            textSize = 12f
+            setTextColor(white)
             gravity = Gravity.CENTER
+            includeFontPadding = false
             movementMethod = LinkMovementMethod.getInstance()
             highlightColor = android.graphics.Color.TRANSPARENT
-            setPadding(0, dp(27), 0, dp(8))
+            setPadding(dp(8), dp(24), dp(8), dp(22))
         }
         content.addView(poweredText)
 
