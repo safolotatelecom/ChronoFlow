@@ -303,11 +303,11 @@ class MainActivity : ComponentActivity() {
         historyList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(historyList)
         val poweredText = TextView(this).apply {
-            val full = "Powered by: safolota.com"
+            val full = "Powered by: Shorif Uddin Suzan"
             val span = SpannableString(full)
             span.setSpan(object : ClickableSpan() {
                 override fun onClick(widget: View) {
-                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.safolota.com"))) }
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/shorifsuzan"))) }
                     catch (_: Exception) { Toast.makeText(this@MainActivity, "Unable to open Facebook", Toast.LENGTH_SHORT).show() }
                 }
             }, 12, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -377,7 +377,7 @@ Volume Up: Start / Pause / Resume.
 Volume Down: Record a lap. Press and hold Volume Down to stop the session.
 
 10. POWERED BY
-RMG Timer is powered by safolota.com."""
+RMG Timer is powered by Shorif Uddin Suzan."""
         val body = TextView(this).apply {
             text = manualText
             textSize = 14f
@@ -824,11 +824,11 @@ RMG Timer is powered by safolota.com."""
             drawText(fit(session.companyName.ifBlank { "Company Name" }, 330f, 26f, true), 235f, 76f, 26f, white, true)
             drawRight("Date: ${session.date}", 565f, 132f, 9f, grey)
 
-            // Operator details: five consistently aligned fields
+            // Operator details: aligned to a consistent five-column grid.
             rect(32f, 146f, 563f, 258f, blue, 13f)
             drawText("OPERATOR INFORMATION", 52f, 173f, 10.5f, teal, true)
-            val infoLeft = 52f
-            val infoRight = 543f
+            val infoLeft = 55f
+            val infoRight = 550f
             val infoWidth = (infoRight - infoLeft) / 5f
             val info = listOf(
                 "Name" to session.operator.name,
@@ -838,47 +838,56 @@ RMG Timer is powered by safolota.com."""
                 "Allowance" to formatPercent(session.operator.allowance)
             )
             info.forEachIndexed { index, pair ->
-                val centerX = infoLeft + index * infoWidth + infoWidth / 2f
-                val value = fit(pair.second, infoWidth - 8f, 11.5f, index == 4)
-                drawCentered(pair.first, centerX, 205f, 8.5f, 0xFFD1D9E5.toInt(), false)
-                drawCentered(value, centerX, 232f, 11.5f, if (index == 4) yellow else white, index == 4)
+                val x = infoLeft + index * infoWidth
+                if (index == 4) {
+                    drawRight(pair.first, infoRight, 205f, 8.5f, 0xFFD1D9E5.toInt())
+                    drawRight(fit(pair.second, infoWidth - 5f, 11.5f, true), infoRight, 232f, 11.5f, yellow, true)
+                } else {
+                    drawText(pair.first, x, 205f, 8.5f, 0xFFD1D9E5.toInt())
+                    drawText(fit(pair.second, infoWidth - 10f, 11.5f, false), x, 232f, 11.5f, white)
+                }
             }
 
-            // Time-study summary
-            rect(32f, 271f, 563f, 369f, pale, 13f)
-            drawText("TIME STUDY SUMMARY", 52f, 298f, 10f, navy, true)
+            // Combined time-study summary and capacity card, matching the supplied reference.
+            rect(32f, 271f, 563f, 382f, pale, 13f)
+            drawText("TIME STUDY SUMMARY", 65f, 304f, 10f, navy, true)
             val summary = listOf(
                 "Average lap" to if (avgMs > 0.0) formatTime(avgMs.toLong()) else "N/A",
                 "Allowed time" to if (allowedMs > 0.0) formatTime(allowedMs.toLong()) else "N/A",
                 "Total time" to formatTime(session.total)
             )
-            val summaryX = listOf(68f, 250f, 432f)
+            val summaryX = listOf(65f, 190f, 310f)
             summary.forEachIndexed { index, pair ->
-                drawText(pair.first, summaryX[index], 326f, 9f, grey)
-                drawText(pair.second, summaryX[index], 352f, 13.5f, navy, true)
+                drawText(pair.first, summaryX[index], 331f, 9f, grey)
+                drawText(pair.second, summaryX[index], 359f, 13.5f, navy, true)
             }
 
-            // Capacity highlight
-            rect(32f, 382f, 563f, 454f, navy, 13f)
-            drawCentered("OPERATOR CAPACITY", 297.5f, 405f, 9.5f, teal, true)
+            // Capacity is embedded at the right side of the summary panel.
+            rect(438f, 280f, 555f, 373f, 0xFF173B73.toInt(), 9f)
+            paint.color = white
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 3f
+            canvas.drawRoundRect(438f, 280f, 555f, 373f, 9f, 9f, paint)
+            paint.style = Paint.Style.FILL
+            drawCentered("OPERATOR CAPACITY", 496.5f, 323f, 9.5f, white, true)
             val capacityValue = if (capacity > 0.0) String.format(Locale.US, "%,d", capacity.roundToInt()) else "N/A"
-            drawCentered(capacityValue, 297.5f, 438f, 25f, yellow, true)
-            drawCentered("PCS / HOUR", 297.5f, 449f, 7f, teal, true)
-            drawRight("CAPACITY = 3600 ÷ ALLOWED TIME (SECONDS)", 563f, 474f, 8f, grey)
+            drawCentered(capacityValue, 496.5f, 351f, 25f, yellow, true)
+            drawCentered("PER HOUR", 496.5f, 369f, 8f, white, false)
+            drawRight("CAPACITY = 3600 ÷ ALLOWED TIME (SECONDS)", 555f, 400f, 8f, grey)
 
             // Keep at least 250 laps on ONE page using up to five automatically sized columns.
-            drawText("LAP BREAKDOWN", 40f, 512f, 12f, navy, true)
+            drawText("LAP BREAKDOWN", 32f, 431f, 12f, navy, true)
             val lapCount = session.laps.size
             if (lapCount == 0) {
-                drawText("No lap splits recorded in this session.", 48f, 550f, 10f, grey)
+                drawText("No lap splits recorded in this session.", 48f, 470f, 10f, grey)
             } else {
                 val columns = ((lapCount + 14) / 15).coerceIn(1, 5)
                 val left = 40f
                 val right = 555f
                 val gap = 9f
                 val colWidth = (right - left - gap * (columns - 1)) / columns
-                val headerY = 548f
-                val rowsStartY = 568f
+                val headerY = 451f
+                val rowsStartY = 470f
                 val footerLimit = 795f
                 val rowsPerColumn = (lapCount + columns - 1) / columns
                 val availableHeight = footerLimit - rowsStartY
@@ -903,7 +912,7 @@ RMG Timer is powered by safolota.com."""
             }
 
             // Footer
-            drawText("Powered by: safolota.com", 40f, 823f, 7.5f, grey)
+            drawText("Powered by: Shorif Uddin Suzan", 40f, 823f, 7.5f, grey)
             drawRight("Prepared by: ${fit(session.preparedBy.ifBlank { "—" }, 190f, 7.5f, true)}", 555f, 823f, 7.5f, grey)
             doc.finishPage(page)
             contentResolver.openOutputStream(uri)?.use { output -> doc.writeTo(output) }
